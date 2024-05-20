@@ -1,0 +1,473 @@
+<html>
+  <head>
+    <title> 8 Ball Pool </title>
+    <style>
+      .rotate-image {
+        transform: rotate(90deg);
+        margin-top: 0%;
+        margin-left: 26.5%;
+      }
+
+      .player-1 {
+        margin-top: 0%;
+        margin-left: 10%;
+      }
+
+      .player-2 {
+        margin-top: 0%;
+        margin-left: 50%;
+      }
+
+      .popup {
+        display: none; /* Initially hidden */
+        position: fixed; /* Stays in place when scrolling */
+        z-index: 1; /* Sits on top of other elements */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scrolling if content overflows */
+        background-color: rgba(0,0,0,0.4); /* Semi-transparent black background */
+      }
+
+      .popup-content {
+        background-color: white;
+        margin: 15% auto; /* 15% from top and centered horizontally */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Adjust width as needed */
+      }
+
+      #p1_name, #p1_balls, #playerTurn, #p2_name, #p2_balls{
+        display: inline-block;
+        margin-left: 10%; /* Adjust spacing as needed */
+      }
+
+      #popup_text_1, #popup_text_2 {
+        display: inline-block;
+        margin-left: 10%;
+        z-index: 3;
+      }
+
+      #play-area {
+        z-index: 1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js">
+    </script>
+    
+    <!--Rest of JS goes here-->
+  </head>
+  <body>
+    <input type="hidden" id="xvel">
+    <input type="hidden" id="yvel">
+    <p id="p1_name" class="player-1">Player 1</p> <p id="p1_balls">0</p> <p id="playerTurn"></p>  <p id="p2_name" class="player-2">Player 2</p> <p id="p2_balls">0</p>
+    <div id="play-area">
+      <svg width="700" height="1375" viewBox="-25 -25 1400 2750"
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      class="rotate-image"
+      id="table-svg">
+      <rect width="1350" height="2700" x="0" y="0" fill="#C0D0C0" /> <rect width="1400" height="25" x="-25" y="-25" fill="darkgreen" />
+      <rect width="1400" height="25" x="-25" y="2700" fill="darkgreen" />
+      <rect width="25" height="2750" x="-25" y="-25" fill="darkgreen" />
+      <rect width="25" height="2750" x="1350" y="-25" fill="darkgreen" />
+      <circle cx="0" cy="0" r="114" fill="black" />
+      <circle cx="0" cy="1350" r="114" fill="black" />
+      <circle cx="0" cy="2700" r="114" fill="black" />
+      <circle cx="1350" cy="0" r="114" fill="black" />
+      <circle cx="1350" cy="1350" r="114" fill="black" />
+      <circle cx="1350" cy="2700" r="114" fill="black" />
+      <circle cx="675" cy="2016" r="28" fill="WHITE" id="cueBall"/>
+      <circle cx="675" cy="732" r="28" fill="GOLD" id="1"/>
+      <circle cx="644" cy="678" r="28" fill="BLUE" id="2"/>
+      <circle cx="704" cy="679" r="28" fill="RED" id="3"/>
+      <circle cx="614" cy="623" r="28" fill="PURPLE" id="4"/>
+      <circle cx="675" cy="620" r="28" fill="DARKORANGE" id="5"/>
+      <circle cx="732" cy="622" r="28" fill="GREEN" id="6"/>
+      <circle cx="583" cy="565" r="28" fill="SADDLEBROWN" id="7"/>
+      <circle cx="644" cy="564" r="28" fill="BLACK" id="8"/>
+      <circle cx="705" cy="564" r="28" fill="YELLOW" id="9"/>
+      <circle cx="763" cy="564" r="28" fill="DEEPSKYBLUE" id="10"/>
+      <circle cx="555" cy="507" r="28" fill="MAGENTA" id="11"/>
+      <circle cx="614" cy="508" r="28" fill="MEDIUMPURPLE" id="12"/>
+      <circle cx="675" cy="506" r="28" fill="SANDYBROWN" id="13"/>
+      <circle cx="734" cy="507" r="28" fill="LAWNGREEN" id="14"/>
+      <circle cx="797" cy="506" r="28" fill="CHOCOLATE" id="15"/>
+      </svg>
+    </div>
+    <div class="popup" id="popup1">
+      <p id="popup_text_1"></p>
+      <button id="closeBtn">Close</button>
+    </div>
+    <div class="popup" id="popup2">
+      <p id="popup_text_2"></p>
+      <button id="closeBtn">Close</button>
+    </div>
+    
+    <script>
+      let cueBall = document.getElementById("cueBall");
+
+      let x;
+      let y;
+      let isOver = false;
+      let isPressed = false;
+      let line;
+      let y_dist;
+      let x_dist;
+      let velocity;
+      let tableState = 0.00;
+      let frameCount = 0;
+      let tableNum = 0;
+      let animRunning = false;
+      let p1_name;
+      let p2_name;
+      let p1_balls = 0;
+      let p2_balls = 0;
+      let p1State = 0;
+      let p2State = 0;
+      let playerTurn = getRandomInt(1, 2);
+      let turnElem = document.getElementById("playerTurn");
+      let switchTurn = true;
+      let low = 0;
+      
+      
+      function getRandomInt(min, max) {
+        min = Math.ceil(min); // Round up minimum value
+        max = Math.floor(max); // Round down maximum value
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+
+      let popup1 = document.getElementById("popup1");
+      let popup2 = document.getElementById("popup2");
+      
+      function showPopup1() {
+        let popup_text_1 = document.getElementById('popup_text_1');
+        popup_text_1.textContent = p1_name + ' Wins!';
+        popup1.style.display = "block";
+      }
+
+      function showPopup2() {
+        let popup_text_2 = document.getElementById('popup_text_2');
+        popup_text_2.textContent = p2_name + ' Wins!';
+        popup2.style.display = "block";
+      }
+      
+      function hidePopup1() {
+        popup1.style.display = "none";
+      }
+      
+      function hidePopup2() {
+        popup2.style.display = "none";
+      }
+      
+      // Optional: Close popup by clicking on itself (or a close button within)
+      popup1.addEventListener("click", function(e) {
+        if (e.target === popup1) { // Close only if clicking on the popup itself
+          hidePopup();
+        }
+      });
+      
+      popup2.addEventListener("click", function(e) {
+        if (e.target === popup2) { // Close only if clicking on the popup itself
+          hidePopup();
+        }
+      });
+
+
+      fetch('getName1')
+        .then(response => response.text()) // Extract text within 'then'
+        .then(textData => {
+          // Use textData here (contains the string from the server)
+          p1_name = textData;
+          console.log(textData);
+          let p1 = document.getElementById("p1_name");
+          p1.textContent = textData + ": ";
+          if (playerTurn == 1){
+            turnElem.textContent = p1_name + "'s turn";
+          }else if (playerTurn == 2){
+            turnElem.textContent = p2_name + "'s turn";
+          }
+        })
+        .catch(error => console.error(error));
+
+      fetch('getName2')
+        .then(response => response.text()) // Extract text within 'then'
+        .then(textData => {
+          // Use textData here (contains the string from the server)
+          p2_name = textData;
+          console.log(textData);
+          let p2 = document.getElementById("p2_name");
+          p2.textContent = textData + ": ";
+          if (playerTurn == 1){
+            turnElem.textContent = p1_name + "'s turn";
+          }else if (playerTurn == 2){
+            turnElem.textContent = p2_name + "'s turn";
+          }
+        })
+        .catch(error => console.error(error));
+
+        
+        async function getFrameCount() {
+        const response = await fetch('getFrameCount');
+        if (response.ok) {
+          const data = await response.text();
+          // console.log(data);  // Now data should contain frameCount
+          // return data;
+          // frameCount = data;
+          return data;
+          // console.log(frameCount);
+        } else {
+            console.error("Error fetching frameCount");
+        }    
+      }
+      
+      // display current turn
+      
+
+      // Event listener for mouse button down (start drag)
+      document.addEventListener('mousedown', function(e){
+        
+        if (event.target.id == "cueBall"){
+          isPressed = true;
+          // let offset = e.target.position()
+
+          cueBall = document.getElementById("cueBall");
+          // console.log(cueBall)
+          x = cueBall.getAttribute("cx");
+          y = cueBall.getAttribute("cy"); // + 50
+
+          var svg = document.getElementById("table-svg");
+          line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+
+          console.log(x, y)
+
+          line.setAttribute('x1', x);
+          line.setAttribute('y1', y);
+          line.setAttribute('id', "cue-line")
+          line.setAttribute('stroke', "black");
+          line.setAttribute('stroke-width', "10");
+          line.setAttribute("x2", x);
+          line.setAttribute("y2", y);
+          console.log(line);
+          svg.appendChild(line);
+
+        }
+        
+      })
+
+      // Event listener for mouse moved
+      document.addEventListener('mousemove', function(){
+        //draw line
+        if (isPressed && !animRunning){
+
+          tableSvg = document.getElementById("table-svg");
+          const svgPoint = tableSvg.createSVGPoint();
+          svgPoint.x = event.clientX;
+          svgPoint.y = event.clientY;
+          const mouseSVGCoords = svgPoint.matrixTransform(tableSvg.getScreenCTM().inverse());
+
+          line.setAttribute("x2", mouseSVGCoords.x);
+          line.setAttribute("y2", mouseSVGCoords.y);
+        }
+
+        // check if 8 ball was sunk and determine win
+        if (!document.getElementById('8')){
+          if (playerTurn == 1){
+            if (p1_balls >=7){
+              console.log("p1 wins (all other balls are gone) ", p1_balls);
+              showPopup1(); // p1 wins (all other balls are gone)
+            }else{
+              console.log("p2 wins (remaining balls) ", p1_balls);
+              showPopup2(); // p2 wins (remaining balls)
+            }
+          }else if (playerTurn == 2){
+            if (p2_balls >= 7){
+              console.log("p2 wins (all other balls gone) ", p2_balls);
+              showPopup2(); // p2 wins (all other balls gone)
+            }else{
+              console.log("p1 wins (remaining balls) ", p2_balls);
+              showPopup1(); // p1 wins (remaining balls)
+            }
+          }
+        }
+
+        cueBall = document.getElementById("cueBall");
+        // console.log(cueBall);
+        if (!cueBall && !animRunning){
+          // console.log("ball is gone");
+          var svg = document.getElementById("table-svg");
+          newCueBall = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          newCueBall.setAttribute('cx', '675');
+          newCueBall.setAttribute('cy', '2016');
+          newCueBall.setAttribute('r', '28');
+          newCueBall.setAttribute('fill', 'WHITE');
+          newCueBall.setAttribute('id', 'cueBall');
+          svg.appendChild(newCueBall);
+
+          fetch("/replaceBall")
+        }
+
+        
+      })
+
+      // Event listener for click released
+      document.addEventListener('mouseup', function(){
+        if (isPressed){
+          
+          isPressed = false;
+  
+          // will use these for passing into shoot() in Physics.py
+          x_dist = line.getAttribute("x2") - x;
+          y_dist = line.getAttribute("y2") - y;
+          console.log(x_dist, y_dist);
+          velocity = Math.sqrt((Math.abs(x_dist) * Math.abs(x_dist)) + (Math.abs(y_dist) * Math.abs(y_dist)));
+          // console.log(velocity) // seems quite slow, call shoot() and then adjust to make better
+  
+          document.getElementById('xvel').value = x_dist;
+          document.getElementById('yvel').value = y_dist;
+  
+          
+  
+          // console.log(tableState);
+          const url = `/poolgame.html?xvel=${x_dist}yvel=,${y_dist}`;
+  
+          
+          // console.log(document.getElementById("table-svg"));
+  
+          // Send an AJAX request with the velocity to poolgame.html
+          fetch(url)
+          .then(response => {
+          })
+          .catch(error => console.error(error));
+  
+          
+  
+          // tableState = 0.0;
+          
+          getFrameCount()
+            .then(data => {
+              if (data){
+                frameCount = (parseFloat(data));
+                //logic for animations goes here (due to async retreival of frameCount)
+                // Now handle animation
+  
+                // Send request to server to retrieve svg
+                animRunning = true
+                switchTurn = true;
+                while (animRunning){
+                  // console.log(tableState);
+                  const fileUrl = `${frameCount}/table${tableState.toFixed(2)}.svg`;
+  
+                  fetch(fileUrl)
+                  .then(response => response.text())
+                  .then(svgContent => {
+                    // update table svg
+                    // document.getElementById("table-svg").innerHTML = svgContent;
+                    document.getElementById("play-area").innerHTML = svgContent;
+  
+                    // check player 1's balls
+                    p1State = 0;
+                    for (let i = 1; i <= 7; i++){
+                      if (!document.getElementById(i.toString())){
+                        if (playerTurn == 1){
+                          switchTurn = false;
+                        }
+                        p1State++;
+                      }
+                      // p1State = 7 - p1State;
+                      p1_balls = p1State;
+  
+                      if (p1_balls >= 7){
+                        // win condition
+                        // showPopup1();
+                      }
+  
+                      let num = document.getElementById("p1_balls");
+                      num.textContent = p1_balls.toString();
+                    }
+  
+  
+                    // check player 2's balls
+                    p2State = 0;
+                    for (let i = 9; i <= 15; i++){
+                      if (!document.getElementById(i.toString())){
+                        if (playerTurn == 2){
+                          switchTurn = false;
+                        }
+                        p2State++;
+                      }
+                      // p2State = 7 - p2State;
+                      p2_balls = p2State;
+
+  
+                      let num = document.getElementById("p2_balls");
+                      num.textContent = p2_balls.toString();
+                    }
+  
+  
+                    
+  
+                  })
+                  .catch(error => console.error(error));
+  
+                  tableState += 0.01;
+  
+                  if (tableState * 100.0 > frameCount){
+                    tableState = frameCount / 100.0;
+  
+                    
+                    if (switchTurn){
+                      if (playerTurn == 1){
+                        playerTurn = 2;
+                        // animRunning = false;
+                      }else if (playerTurn == 2){
+                        playerTurn = 1;
+                        // animRunning = false;
+                      }
+                    }
+
+                    let turnElem = document.getElementById("playerTurn");
+                    if (playerTurn == 1){
+                      turnElem.textContent = p1_name + "'s turn";
+                    }else if (playerTurn == 2){
+                      turnElem.textContent = p2_name + "'s turn";
+                    }
+                    
+                    
+                    animRunning = false;
+                    break;
+                  }
+                }
+
+                
+  
+              }else{
+                console.error("Error fetching frameCount");
+              }
+            })
+            .catch(error => console.error(error))
+  
+          var svg = document.getElementById("table-svg");
+          svg.removeChild(line);
+  
+          tableNum++;
+
+          
+          
+        }
+        
+
+        
+
+      })
+
+    </script>    
+  </body>
+</html>
