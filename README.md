@@ -11,6 +11,7 @@ A custom-built physics library is used to calculate precise and mathematically a
 
 
 # Dependencies
+- Linux FS (can be adapted to work with other FS)
 - Python 3.12
 - clang
 - Any web browser (Chromium-based browsers have smooother animations)
