@@ -13,6 +13,6 @@ A custom-built physics library is used to calculate precise and mathematically a
 # Dependencies
 - Linux FS (can be adapted to work with other FS)
 - Python 3.12
-- clang
+- clang compiler (others will likely work, was only tested with clang)
 - Any web browser (Chromium-based browsers have smooother animations)
 - Any modern CPU for easy use of physics library (1000+ simulations per second)
