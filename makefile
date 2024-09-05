@@ -1,8 +1,8 @@
 EXPORT_PATH = export LD_LIBRARY_PATH=`pwd` && 
 CC = clang
 CFLAGS = -Wall -std=c99 -g -pedantic
-PYTHON_INCLUDE = /usr/include/python3.11/
-PYTHON_LIB = /usr/lib/python3.11
+PYTHON_INCLUDE = /usr/include/python3.12/
+PYTHON_LIB = /usr/lib/python3.12
 
 all: a1 
 
@@ -25,7 +25,7 @@ phylib_wrap.o: phylib_wrap.c
 	$(CC) $(CFLAGS) -c phylib_wrap.c -I$(PYTHON_INCLUDE) -fPIC -o phylib_wrap.o
 
 _phylib.so: phylib_wrap.o libphylib.so
-	$(CC) $(CFLAGS) -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.11 -lphylib -o _phylib.so
+	$(CC) $(CFLAGS) -shared phylib_wrap.o -L. -L/usr/lib/python3.11 -lpython3.12 -lphylib -o _phylib.so
 
 main.o: A1test1.c phylib.h _phylib.so
 	$(CC) $(CFLAGS) -c A1test1.c -o main.o
